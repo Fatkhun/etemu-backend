@@ -8,6 +8,7 @@ const mongoose = require('./api/config/database'); //database configuration
 const cors = require('cors');
 const session = require('client-sessions');
 const cookieParser = require('cookie-parser');
+const fileUpload = require('express-fileupload');
 const app = express();
 app.use(cors());
 app.use(cookieParser());
@@ -15,8 +16,8 @@ app.use(cookieParser());
 mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
 app.use(logger('dev'));
 app.use(express.static('public'));
-app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.json());
 app.get('/', function(req, res){
 res.json({"message" : "Build REST API with node.js"});
 });

@@ -5,9 +5,12 @@ const paths = require('path');
 const express = require('express');
 const router = express.Router();
 
+var path = './public/uploads';
+
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
-    cb(null, './public/uploads');
+    const uploadsDir = paths.join(__dirname, '..', '..', 'public', 'uploads')
+    cb (null, uploadsDir);
   },
   filename: function(req, file, cb) {
     cb(null, file.fieldname + '-' + Date.now() + paths.extname(file.originalname));
@@ -32,20 +35,30 @@ const upload = multer({
 });
 
 router.post("/create", upload.single('itemImage'), (req, res, next) => {
-  // var filePath = req.file.path.replace('undefined', req.body.itemImage);
-  var new_img = new MissingItem;
-  new_img.category = req.body.category;
-  new_img.detail = req.body.detail;
-  new_img.contact = req.body.contact;
-  // new_img.itemImage = req.body.itemImage;
-  new_img.itemImage.data = fs.readFileSync(req.file.path).toString('base64');
-  // const missingItem = new MissingItem({
-  //   category: req.body.category,
-  //   detail: req.body.detail,
-  //   contact: req.body.contact,
-  //   itemImage: new_img 
-  // });
-  new_img
+  // function to create file from base64 encoded string
+  function base64_decode(base64str, file) {
+    // create buffer object from base64 encoded string, it is important to tell the constructor that the string is base64 encoded
+  var bitmap = new Buffer.from(base64str, 'base64');
+  // write buffer to file
+  fs.writeFileSync(file, bitmap);
+  console.log('******** File created from base64 encoded string ********');
+  }
+  if(req.file){
+    req.body.itemImage = req.file.filename;
+  }
+
+  // var new_img = new MissingItem(req.body);
+  // new_img.category = req.body.category;
+  // new_img.detail = req.body.detail;
+  // new_img.contact = req.body.contact;
+  // new_img.itemImage = base64_decode(req.body.itemImage, 'copy.jpeg')
+  const missingItem = new MissingItem({
+    category: req.body.category,
+    detail: req.body.detail,
+    contact: req.body.contact,
+    itemImage: req.body.itemImage
+  });
+  missingItem
     .save()
     .then(result => {
       console.log(result);
@@ -57,6 +70,7 @@ router.post("/create", upload.single('itemImage'), (req, res, next) => {
         error: err
       });
     });
+  
 });
 
 router.post("/update/:id", upload.single('itemImage'), (req, res, next) => {

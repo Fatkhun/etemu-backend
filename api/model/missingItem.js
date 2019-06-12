@@ -14,7 +14,7 @@ const MissingItemSchema = new Schema({
       type: String, required: true
     },
     itemImage: {
-      data: Array
+      type: String, required: true
     },
     itemType: {
       type: String,
