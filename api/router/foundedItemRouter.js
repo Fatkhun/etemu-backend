@@ -3,12 +3,15 @@ const multer = require('multer');
 const express = require('express');
 const router = express.Router();
 
+var path = './public/uploads';
+
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
-    cb(null, './uploads/');
+    const uploadsDir = paths.join(__dirname, '..', '..', 'public', 'uploads')
+    cb (null, uploadsDir);
   },
   filename: function(req, file, cb) {
-    cb(null, new Date().toISOString() + "-founded-" + file.originalname);
+    cb(null, file.fieldname + '-' + Date.now() + paths.extname(file.originalname));
   }
 });
 
@@ -17,7 +20,7 @@ const fileFilter = (req, file, cb) => {
   if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
     cb(null, true);
   } else {
-    cb(null, false);
+    cb(new Error('Only .jpeg or .png files are accepted'), false);
   }
 };
 
@@ -29,21 +32,40 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
-router.post("/create", upload.single('itemImage'), (req, res, next) => {
+router.post("/create", (req, res, next) => {
   const foundedItem = new FoundedItem({
     category: req.body.category,
     detail: req.body.detail,
     contact: req.body.contact,
-    itemImage: req.file.path 
+    itemImage: req.body.itemImage 
   });
   foundedItem
     .save()
     .then(result => {
       console.log(result);
-      res.status(201).json({
-        result: result,
-        message: "Created data successfully",
+      res.status(201).json(result);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({
+        error: err
       });
+    });
+});
+
+router.post("/update/:id", (req, res, next) => {
+  const id = req.params.id;
+  const updateOps = {
+    category: req.body.category,
+    detail: req.body.detail,
+    contact: req.body.contact,
+    itemImage: req.body.itemImage
+  };
+  FoundedItem.update({ _id: id }, { $set: updateOps })
+    .exec()
+    .then(result => {
+      console.log(result);
+      res.status(201).json(result);
     })
     .catch(err => {
       console.log(err);
@@ -55,7 +77,7 @@ router.post("/create", upload.single('itemImage'), (req, res, next) => {
 
 router.get("/all", (req, res, next) => {
   FoundedItem.find()
-    .select("category detail contact itemType itemImage createdAt updatedAt")
+    .select("category detail contact itemImage createdAt updatedAt")
     .exec()
     .then(docs => {
       if (docs.length > 0) {
@@ -77,7 +99,7 @@ router.get("/all", (req, res, next) => {
 router.get("/:id", (req, res, next) => {
   const id = req.params.id;
   FoundedItem.findById(id)
-    .select('category detail contact itemType itemImage createdAt updatedAt')
+    .select('category detail contact itemImage createdAt updatedAt')
     .exec()
     .then(docs => {
       if (docs) {

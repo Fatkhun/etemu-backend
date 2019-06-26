@@ -16,7 +16,7 @@ app.use(cookieParser());
 mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
 app.use(logger('dev'));
 app.use(express.static('public'));
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 app.get('/', function(req, res){
 res.json({"message" : "Build REST API with node.js"});

@@ -34,24 +34,7 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
-router.post("/create", upload.single('itemImage'), (req, res, next) => {
-  // function to create file from base64 encoded string
-  function base64_decode(base64str, file) {
-    // create buffer object from base64 encoded string, it is important to tell the constructor that the string is base64 encoded
-  var bitmap = new Buffer.from(base64str, 'base64');
-  // write buffer to file
-  fs.writeFileSync(file, bitmap);
-  console.log('******** File created from base64 encoded string ********');
-  }
-  if(req.file){
-    req.body.itemImage = req.file.filename;
-  }
-
-  // var new_img = new MissingItem(req.body);
-  // new_img.category = req.body.category;
-  // new_img.detail = req.body.detail;
-  // new_img.contact = req.body.contact;
-  // new_img.itemImage = base64_decode(req.body.itemImage, 'copy.jpeg')
+router.post("/create", (req, res, next) => {
   const missingItem = new MissingItem({
     category: req.body.category,
     detail: req.body.detail,
@@ -73,28 +56,19 @@ router.post("/create", upload.single('itemImage'), (req, res, next) => {
   
 });
 
-router.post("/update/:id", upload.single('itemImage'), (req, res, next) => {
+router.post("/update/:id", (req, res, next) => {
   const id = req.params.id;
   const updateOps = {
     category: req.body.category,
     detail: req.body.detail,
     contact: req.body.contact,
-    itemImage: req.file.path 
+    itemImage: req.body.itemImage
   };
-  // for (let key of Object.keys(req.body)) {
-  //   console.log(key, updateOps[key])
-  //   updateOps[key.propName] = key.value;
-  // }
-  // for (i = 0; i < req.body.length; i++){
-  //   updateOps[i.propName] = i.value
-  // }
   MissingItem.update({ _id: id }, { $set: updateOps })
     .exec()
     .then(result => {
-      res.status(200).json({
-          result: result,
-          message: 'Item updated'
-      });
+      console.log(result);
+      res.status(201).json(result);
     })
     .catch(err => {
       console.log(err);
@@ -106,7 +80,7 @@ router.post("/update/:id", upload.single('itemImage'), (req, res, next) => {
 
 router.get("/all", (req, res, next) => {
   MissingItem.find()
-    .select("category detail contact itemType itemImage")
+    .select("category detail contact itemImage createdAt updatedAt")
     .exec()
     .then(docs => {
       if (docs.length > 0) {
@@ -128,7 +102,7 @@ router.get("/all", (req, res, next) => {
 router.get("/:id", (req, res, next) => {
   const id = req.params.id;
   MissingItem.findById(id)
-    .select('category detail contact itemType itemImage')
+    .select('category detail contact itemImage createdAt updatedAt')
     .exec()
     .then(docs => {
       if (docs) {
